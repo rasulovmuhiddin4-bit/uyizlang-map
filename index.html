@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* CSS kodlari bir xil saqlansin */
         body {
             margin: 0;
             padding: 0;
@@ -349,7 +348,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script>
-        // API URL - production backend
+        // API URL - production uchun
         const API_BASE_URL = 'https://uyizlang-api.onrender.com/api';
 
         // Xaritani yaratish
@@ -402,6 +401,7 @@
                 }
                 
                 const data = await response.json();
+                console.log('API dan kelgan ma\'lumot:', data);
                 
                 if (data.success) {
                     allListings = data.data;
@@ -445,22 +445,6 @@
                     ],
                     created_at: now.toISOString(),
                     is_new: true
-                },
-                {
-                    id: 2,
-                    title: "Yunusobod tumanida Xovli",
-                    description: "Yangi ta'mir, 6 sotix, hovli, bog' bor",
-                    price: "120,000 USD",
-                    rooms: 4,
-                    floor: "1/1",
-                    location: [41.351081, 69.280562],
-                    phone: "+998901234568",
-                    images: [
-                        'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=400&h=300&fit=crop',
-                        'https://images.unsplash.com/photo-1494526585095-c41746248156?w=400&h=300&fit=crop'
-                    ],
-                    created_at: twoDaysAgo.toISOString(),
-                    is_new: false
                 }
             ];
         }
@@ -475,25 +459,38 @@
             console.log('Listing details:', listing);
             const modalContent = document.getElementById('modalContent');
             
+            // Ma'lumotlarni to'g'ri formatlash
+            const safeListing = {
+                ...listing,
+                title: listing.title || 'Noma\'lum',
+                description: listing.description || 'Tavsif mavjud emas',
+                price: listing.price || 'Narx ko\'rsatilmagan',
+                rooms: listing.rooms || 0,
+                floor: listing.floor || 'Noma\'lum',
+                phone: listing.phone || '+998901234567',
+                images: listing.images || [],
+                location: listing.location || [41.311081, 69.240562]
+            };
+            
             const content = `
-                <h2 style="color: #2c3e50; margin-bottom: 20px; border-bottom: 3px solid #3498db; padding-bottom: 10px;">${listing.title}</h2>
+                <h2 style="color: #2c3e50; margin-bottom: 20px; border-bottom: 3px solid #3498db; padding-bottom: 10px;">${safeListing.title}</h2>
                 
                 <div class="details-section">
                     <div class="detail-item">
                         <span class="detail-label">💰 Narx:</span>
-                        <span class="detail-value">${listing.price}</span>
+                        <span class="detail-value">${safeListing.price}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">🏠 Xonalar:</span>
-                        <span class="detail-value">${listing.rooms} xonali</span>
+                        <span class="detail-value">${safeListing.rooms} xonali</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">🏢 Qavat:</span>
-                        <span class="detail-value">${listing.floor}</span>
+                        <span class="detail-value">${safeListing.floor}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">📝 Tavsif:</span>
-                        <span class="detail-value">${listing.description}</span>
+                        <span class="detail-value">${safeListing.description}</span>
                     </div>
                 </div>
 
@@ -503,8 +500,8 @@
                         Uy rasmlari
                     </h3>
                     <div class="listing-images">
-                        ${listing.images && listing.images.length > 0 ? 
-                            listing.images.map(img => 
+                        ${safeListing.images && safeListing.images.length > 0 ? 
+                            safeListing.images.map(img => 
                                 `<img src="${img}" alt="Uy rasmi" class="listing-image" onclick="window.open('${img}', '_blank')">`
                             ).join('') :
                             '<p style="color: #7f8c8d; text-align: center;">Rasmlar mavjud emas</p>'
@@ -513,17 +510,17 @@
                 </div>
 
                 <div style="text-align: center; margin: 25px 0;">
-                    <a href="tel:${listing.phone}" class="phone-link">
-                        <i class="fas fa-phone"></i> ${listing.phone} ga qo'ng'iroq qilish
+                    <a href="tel:${safeListing.phone}" class="phone-link">
+                        <i class="fas fa-phone"></i> ${safeListing.phone} ga qo'ng'iroq qilish
                     </a>
                 </div>
 
                 <div class="popup-buttons">
-                    <a href="https://maps.google.com/?q=${listing.location[0]},${listing.location[1]}" 
+                    <a href="https://maps.google.com/?q=${safeListing.location[0]},${safeListing.location[1]}" 
                        target="_blank" class="popup-button">
                         <i class="fab fa-google"></i> Google Maps
                     </a>
-                    <a href="https://yandex.com/maps/?pt=${listing.location[1]},${listing.location[0]}&z=15" 
+                    <a href="https://yandex.com/maps/?pt=${safeListing.location[1]},${safeListing.location[0]}&z=15" 
                        target="_blank" class="popup-button">
                         <i class="fas fa-map"></i> Yandex Maps
                     </a>
@@ -536,10 +533,16 @@
 
         // Marker ranglarini belgilash
         function getMarkerColor(listing) {
-            if (listing.is_new) {
+            // Yangi e'lonni tekshirish (24 soat)
+            const now = new Date();
+            const created = new Date(listing.created_at);
+            const hoursDiff = (now - created) / (1000 * 60 * 60);
+            
+            if (hoursDiff < 24) {
                 return 'linear-gradient(135deg, #e74c3c, #c0392b)';
             }
             
+            // Foydalanuvchi joylashuviga yaqinligini tekshirish
             if (userLocation) {
                 const distance = calculateDistance(
                     userLocation.lat, 
@@ -571,6 +574,12 @@
 
         // Marker yaratish
         function createMarker(listing) {
+            if (!listing.location || !Array.isArray(listing.location) || listing.location.length !== 2) {
+                console.error('Noto\'g\'ri location:', listing);
+                return null;
+            }
+            
+            const [lat, lng] = listing.location;
             const color = getMarkerColor(listing);
             
             const markerIcon = L.divIcon({
@@ -588,30 +597,40 @@
                 iconAnchor: [13, 13]
             });
 
-            // Popup content
+            // Popup content - to'g'ri funksiya chaqiruvi
             const popupContent = `
                 <div class="custom-popup">
-                    <div class="popup-title">${listing.title}</div>
+                    <div class="popup-title">${listing.title || 'Noma\'lum'}</div>
                     <div class="popup-details">
-                        ${listing.rooms} xonali, ${listing.floor} qavat<br>
-                        ${listing.description}
+                        ${listing.rooms || 0} xonali, ${listing.floor || 'Noma\'lum'} qavat<br>
+                        ${listing.description || 'Tavsif mavjud emas'}
                     </div>
-                    <div class="popup-price">${listing.price}</div>
+                    <div class="popup-price">${listing.price || 'Narx ko\'rsatilmagan'}</div>
                     <div class="popup-buttons">
-                        <button onclick="showListingDetails(${JSON.stringify(listing).replace(/'/g, "\\'")})" 
+                        <button onclick="window.showListingDetails(${JSON.stringify(listing).replace(/'/g, "\\'")})" 
                                 class="popup-button details">
                             <i class="fas fa-info-circle"></i> Batafsil
                         </button>
-                        <a href="tel:${listing.phone}" class="popup-button phone">
+                        <a href="tel:${listing.phone || '+998901234567'}" class="popup-button phone">
                             <i class="fas fa-phone"></i> Qo'ng'iroq
                         </a>
                     </div>
                 </div>
             `;
 
-            const marker = L.marker(listing.location, { 
-                icon: markerIcon
+            const marker = L.marker([lat, lng], { 
+                icon: markerIcon,
+                riseOnHover: true
             }).addTo(markers).bindPopup(popupContent);
+
+            marker.on('mouseover', function() {
+                this.openPopup();
+            });
+
+            // Marker bosilganda ham modal ochish
+            marker.on('click', function() {
+                showListingDetails(listing);
+            });
 
             return marker;
         }
@@ -626,15 +645,17 @@
                 let passPriceFilter = true;
                 
                 if (roomFilter) {
+                    const rooms = listing.rooms || 0;
                     if (roomFilter === '4') {
-                        passRoomFilter = listing.rooms >= 4;
+                        passRoomFilter = rooms >= 4;
                     } else {
-                        passRoomFilter = listing.rooms === parseInt(roomFilter);
+                        passRoomFilter = rooms === parseInt(roomFilter);
                     }
                 }
                 
                 if (priceFilter) {
-                    const price = parseInt(listing.price.replace(/[^0-9]/g, ''));
+                    const priceText = listing.price || '0';
+                    const price = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
                     passPriceFilter = price <= parseInt(priceFilter);
                 }
                 
@@ -663,23 +684,34 @@
                 return;
             }
             
+            let addedMarkers = 0;
             listings.forEach(listing => {
-                createMarker(listing);
+                const marker = createMarker(listing);
+                if (marker) {
+                    addedMarkers++;
+                }
             });
             
-            // Agar e'lonlar bo'lsa, ularning markaziga o'tish
-            if (listings.length > 0) {
-                const group = new L.featureGroup(listings.map(l => L.marker(l.location)));
-                map.fitBounds(group.getBounds().pad(0.1));
+            if (addedMarkers > 0) {
+                const markerLocations = listings
+                    .filter(l => l.location && Array.isArray(l.location) && l.location.length === 2)
+                    .map(l => l.location);
+                    
+                if (markerLocations.length > 0) {
+                    const bounds = L.latLngBounds(markerLocations);
+                    map.fitBounds(bounds.pad(0.1));
+                }
+                
+                updateStatus(`${addedMarkers} ta e'lon xaritada ko'rsatilmoqda`, true);
+            } else {
+                updateStatus('Hech qanday e\'lon xaritada ko\'rsatilmadi', false);
             }
-            
-            updateStatus(`${listings.length} ta e'lon xaritada ko'rsatilmoqda`, true);
         }
 
         // E'lonlarni yangilash
         async function refreshListings() {
-            await loadListingsFromBackend();
-            clearFilters();
+            allListings = await loadListingsFromBackend();
+            addListingsToMap(allListings);
         }
 
         // Foydalanuvchi joylashuvini aniqlash
@@ -722,7 +754,7 @@
 
         // Dastlabki yuklash
         async function initializeMap() {
-            await loadListingsFromBackend();
+            allListings = await loadListingsFromBackend();
             addListingsToMap();
         }
 
@@ -736,6 +768,14 @@
                 closeModal();
             }
         };
+
+        // Global qilish kerak bo'lgan funksiyalar
+        window.showListingDetails = showListingDetails;
+        window.closeModal = closeModal;
+        window.locateUser = locateUser;
+        window.refreshListings = refreshListings;
+        window.clearFilters = clearFilters;
+        window.filterListings = filterListings;
     </script>
 </body>
 </html>
