@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* CSS kodlari bir xil saqlansin */
         body {
             margin: 0;
             padding: 0;
@@ -348,7 +349,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script>
-        // API URL - production uchun moslashtirilgan
+        // API URL - production backend
         const API_BASE_URL = 'https://uyizlang-api.onrender.com/api';
 
         // Xaritani yaratish
@@ -388,48 +389,22 @@
             document.getElementById('loading').style.display = 'none';
         }
 
-        // Backend dan e'lonlarni yuklash (yaxshilangan)
+        // Backend dan e'lonlarni yuklash
         async function loadListingsFromBackend() {
             showLoading();
             updateStatus('E\'lonlar yuklanmoqda...');
             
             try {
-                console.log('API ga so\'rov yuborilmoqda:', `${API_BASE_URL}/listings`);
-                
-                const response = await fetch(`${API_BASE_URL}/listings`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('Response status:', response.status);
+                const response = await fetch(`${API_BASE_URL}/listings`);
                 
                 if (!response.ok) {
                     throw new Error(`Server xatosi: ${response.status}`);
                 }
                 
                 const data = await response.json();
-                console.log('API dan kelgan ma\'lumot:', data);
                 
                 if (data.success) {
                     allListings = data.data;
-                    
-                    // Har bir e'londa location borligini tekshirish
-                    allListings.forEach((listing, index) => {
-                        if (!listing.location || !Array.isArray(listing.location)) {
-                            console.warn(`E'lon ${index} da location maydoni noto'g'ri:`, listing);
-                        }
-                        
-                        // Yangi e'lonlarni belgilash (24 soat)
-                        const listingDate = new Date(listing.created_at);
-                        const now = new Date();
-                        const hoursDiff = (now - listingDate) / (1000 * 60 * 60);
-                        listing.is_new = hoursDiff < 24;
-                    });
-                    
-                    console.log(`${allListings.length} ta e'lon yuklandi:`, allListings);
                     updateStatus(`${allListings.length} ta e'lon yuklandi`, true);
                     return allListings;
                 } else {
@@ -439,8 +414,7 @@
                 console.error('Yuklash xatosi:', error);
                 updateStatus(`Xato: ${error.message}`, false);
                 
-                // Fallback: namuna ma'lumotlarni ishlatish
-                console.log('Fallback: namuna ma\'lumotlar ishlatilmoqda');
+                // Fallback ma'lumotlar
                 const sampleListings = getSampleListings();
                 updateStatus(`${sampleListings.length} ta namuna e'lon yuklandi`, true);
                 return sampleListings;
@@ -449,7 +423,7 @@
             }
         }
 
-        // Namuna ma'lumotlar (fallback) - yangilangan
+        // Namuna ma'lumotlar (fallback)
         function getSampleListings() {
             const now = new Date();
             const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -460,8 +434,7 @@
                     id: 1,
                     title: "Olmazor tumanida Kvartira",
                     description: "Holati zo'r, hamma sharoitlar bor, yangi ta'mir, metro yaqinida",
-                    price: 95000,
-                    price_display: "95,000 USD",
+                    price: "95,000 USD",
                     rooms: 3,
                     floor: "5/12",
                     location: [41.311081, 69.240562],
@@ -477,8 +450,7 @@
                     id: 2,
                     title: "Yunusobod tumanida Xovli",
                     description: "Yangi ta'mir, 6 sotix, hovli, bog' bor",
-                    price: 120000,
-                    price_display: "120,000 USD",
+                    price: "120,000 USD",
                     rooms: 4,
                     floor: "1/1",
                     location: [41.351081, 69.280562],
@@ -486,38 +458,6 @@
                     images: [
                         'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=400&h=300&fit=crop',
                         'https://images.unsplash.com/photo-1494526585095-c41746248156?w=400&h=300&fit=crop'
-                    ],
-                    created_at: twoDaysAgo.toISOString(),
-                    is_new: false
-                },
-                {
-                    id: 3,
-                    title: "Chilonzor tumanida Kvartira",
-                    description: "Markaziy, yangi ta'mir, mebel bilan",
-                    price: 85000,
-                    price_display: "85,000 USD",
-                    rooms: 2,
-                    floor: "3/9",
-                    location: [41.291081, 69.200562],
-                    phone: "+998901234569",
-                    images: [
-                        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop'
-                    ],
-                    created_at: yesterday.toISOString(),
-                    is_new: true
-                },
-                {
-                    id: 4,
-                    title: "Mirzo Ulug'bek tumanida Kvartira",
-                    description: "Yangi qurilish, 3 xonali, oshxona alohida",
-                    price: 75000,
-                    price_display: "75,000 USD",
-                    rooms: 3,
-                    floor: "7/16",
-                    location: [41.331081, 69.260562],
-                    phone: "+998901234570",
-                    images: [
-                        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop'
                     ],
                     created_at: twoDaysAgo.toISOString(),
                     is_new: false
@@ -532,6 +472,7 @@
 
         // Modal oynani ochish
         function showListingDetails(listing) {
+            console.log('Listing details:', listing);
             const modalContent = document.getElementById('modalContent');
             
             const content = `
@@ -540,7 +481,7 @@
                 <div class="details-section">
                     <div class="detail-item">
                         <span class="detail-label">💰 Narx:</span>
-                        <span class="detail-value">${listing.price_display || listing.price}</span>
+                        <span class="detail-value">${listing.price}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">🏠 Xonalar:</span>
@@ -549,10 +490,6 @@
                     <div class="detail-item">
                         <span class="detail-label">🏢 Qavat:</span>
                         <span class="detail-value">${listing.floor}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">📅 Sana:</span>
-                        <span class="detail-value">${new Date(listing.created_at).toLocaleDateString('uz-UZ')}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">📝 Tavsif:</span>
@@ -632,23 +569,8 @@
             return R * c;
         }
 
-        // Marker yaratish (yaxshilangan)
+        // Marker yaratish
         function createMarker(listing) {
-            // Location ni tekshirish
-            if (!listing.location || !Array.isArray(listing.location) || listing.location.length !== 2) {
-                console.error('Noto\'g\'ri location:', listing);
-                return null;
-            }
-            
-            const [lat, lng] = listing.location;
-            
-            // Koordinatalarni tekshirish
-            if (typeof lat !== 'number' || typeof lng !== 'number' || 
-                lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                console.error('Noto\'g\'ri koordinatalar:', listing);
-                return null;
-            }
-            
             const color = getMarkerColor(listing);
             
             const markerIcon = L.divIcon({
@@ -661,7 +583,6 @@
                     border: 4px solid white;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
                     cursor: pointer;
-                    transition: transform 0.3s;
                 "></div>`,
                 iconSize: [26, 26],
                 iconAnchor: [13, 13]
@@ -675,8 +596,7 @@
                         ${listing.rooms} xonali, ${listing.floor} qavat<br>
                         ${listing.description}
                     </div>
-                    <div class="popup-price">${listing.price_display || listing.price}</div>
-                    ${listing.is_new ? '<div style="background: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; margin-bottom: 10px;">YANGI</div>' : ''}
+                    <div class="popup-price">${listing.price}</div>
                     <div class="popup-buttons">
                         <button onclick="showListingDetails(${JSON.stringify(listing).replace(/'/g, "\\'")})" 
                                 class="popup-button details">
@@ -689,14 +609,9 @@
                 </div>
             `;
 
-            const marker = L.marker([lat, lng], { 
-                icon: markerIcon,
-                riseOnHover: true
+            const marker = L.marker(listing.location, { 
+                icon: markerIcon
             }).addTo(markers).bindPopup(popupContent);
-
-            marker.on('mouseover', function() {
-                this.openPopup();
-            });
 
             return marker;
         }
@@ -710,7 +625,6 @@
                 let passRoomFilter = true;
                 let passPriceFilter = true;
                 
-                // Xonalar bo'yicha filtr
                 if (roomFilter) {
                     if (roomFilter === '4') {
                         passRoomFilter = listing.rooms >= 4;
@@ -719,9 +633,9 @@
                     }
                 }
                 
-                // Narx bo'yicha filtr
                 if (priceFilter) {
-                    passPriceFilter = listing.price <= parseInt(priceFilter);
+                    const price = parseInt(listing.price.replace(/[^0-9]/g, ''));
+                    passPriceFilter = price <= parseInt(priceFilter);
                 }
                 
                 return passRoomFilter && passPriceFilter;
@@ -740,43 +654,26 @@
             updateStatus('Filtrlar tozalandi', true);
         }
 
-        // Barcha e'lonlarni xaritaga qo'shish (yaxshilangan)
+        // Barcha e'lonlarni xaritaga qo'shish
         function addListingsToMap(listings = allListings) {
-            console.log('Xaritaga e\'lonlar qo\'shilmoqda:', listings.length);
-            
             markers.clearLayers();
             
             if (listings.length === 0) {
-                console.log('Xaritaga qo\'shish uchun e\'lonlar topilmadi');
                 updateStatus('E\'lonlar topilmadi', false);
                 return;
             }
             
-            let addedMarkers = 0;
             listings.forEach(listing => {
-                const marker = createMarker(listing);
-                if (marker) {
-                    addedMarkers++;
-                }
+                createMarker(listing);
             });
             
-            console.log(`${addedMarkers} ta marker qo'shildi`);
-            
-            // Agar markerlar qo'shilsa, ularning markaziga o'tish
-            if (addedMarkers > 0) {
-                const markerLocations = listings
-                    .filter(l => l.location && Array.isArray(l.location) && l.location.length === 2)
-                    .map(l => L.marker(l.location));
-                    
-                if (markerLocations.length > 0) {
-                    const group = new L.featureGroup(markerLocations);
-                    map.fitBounds(group.getBounds().pad(0.1));
-                }
-                
-                updateStatus(`${addedMarkers} ta e'lon xaritada ko'rsatilmoqda`, true);
-            } else {
-                updateStatus('Hech qanday e\'lon xaritada ko\'rsatilmadi', false);
+            // Agar e'lonlar bo'lsa, ularning markaziga o'tish
+            if (listings.length > 0) {
+                const group = new L.featureGroup(listings.map(l => L.marker(l.location)));
+                map.fitBounds(group.getBounds().pad(0.1));
             }
+            
+            updateStatus(`${listings.length} ta e'lon xaritada ko'rsatilmoqda`, true);
         }
 
         // E'lonlarni yangilash
@@ -825,16 +722,12 @@
 
         // Dastlabki yuklash
         async function initializeMap() {
-            console.log('Xarita ishga tushmoqda...');
             await loadListingsFromBackend();
             addListingsToMap();
         }
 
         // Xarita yuklanganda ishga tushirish
-        map.whenReady(() => {
-            console.log('Xarita tayyor, e\'lonlar yuklanmoqda...');
-            initializeMap();
-        });
+        map.whenReady(initializeMap);
 
         // Modal oynani tashqariga bosganda yopish
         window.onclick = function(event) {
@@ -843,20 +736,6 @@
                 closeModal();
             }
         };
-
-        // Server holatini tekshirish
-        async function checkServerHealth() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/health`);
-                const data = await response.json();
-                console.log('Server holati:', data);
-            } catch (error) {
-                console.error('Server holatini tekshirishda xato:', error);
-            }
-        }
-
-        // Dastlabki tekshiruv
-        checkServerHealth();
     </script>
 </body>
 </html>
