@@ -81,6 +81,13 @@
         .popup-button.phone:hover {
             box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
         }
+        .popup-button.maps {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+        }
+        .popup-button.maps:hover {
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
         .map-controls {
             position: absolute;
             top: 15px;
@@ -275,6 +282,39 @@
             outline: none;
             border-color: #3498db;
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        .maps-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .map-service-button {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+        .map-service-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+        .map-service-button.google {
+            background: linear-gradient(135deg, #4285F4, #34A853);
+        }
+        .map-service-button.yandex {
+            background: linear-gradient(135deg, #FF0000, #FF3333);
         }
     </style>
 </head>
@@ -515,15 +555,30 @@
                     </a>
                 </div>
 
+                <div style="margin: 20px 0;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-map-marked-alt" style="color: #e74c3c;"></i>
+                        Xaritada ochish
+                    </h3>
+                    <div class="maps-buttons">
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${safeListing.location[0]},${safeListing.location[1]}" 
+                           target="_blank" class="map-service-button google">
+                            <i class="fab fa-google"></i> Google Maps
+                        </a>
+                        <a href="https://yandex.com/maps/?rtext=~${safeListing.location[0]},${safeListing.location[1]}" 
+                           target="_blank" class="map-service-button yandex">
+                            <i class="fas fa-map"></i> Yandex Maps
+                        </a>
+                    </div>
+                </div>
+
                 <div class="popup-buttons">
-                    <a href="https://maps.google.com/?q=${safeListing.location[0]},${safeListing.location[1]}" 
-                       target="_blank" class="popup-button">
-                        <i class="fab fa-google"></i> Google Maps
-                    </a>
-                    <a href="https://yandex.com/maps/?pt=${safeListing.location[1]},${safeListing.location[0]}&z=15" 
-                       target="_blank" class="popup-button">
-                        <i class="fas fa-map"></i> Yandex Maps
-                    </a>
+                    <button onclick="shareListing(${JSON.stringify(safeListing).replace(/'/g, "\\'")})" class="popup-button">
+                        <i class="fas fa-share-alt"></i> Ulashish
+                    </button>
+                    <button onclick="saveListing(${JSON.stringify(safeListing).replace(/'/g, "\\'")})" class="popup-button details">
+                        <i class="fas fa-bookmark"></i> Saqlash
+                    </button>
                 </div>
             `;
             
@@ -597,7 +652,7 @@
                 iconAnchor: [13, 13]
             });
 
-            // Popup content - to'g'ri funksiya chaqiruvi
+            // Popup content - Maps linklari bilan
             const popupContent = `
                 <div class="custom-popup">
                     <div class="popup-title">${listing.title || 'Noma\'lum'}</div>
@@ -606,6 +661,21 @@
                         ${listing.description || 'Tavsif mavjud emas'}
                     </div>
                     <div class="popup-price">${listing.price || 'Narx ko\'rsatilmagan'}</div>
+                    
+                    <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #2c3e50; font-size: 12px;">📍 Xaritada ochish:</strong>
+                        <div style="display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap;">
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" 
+                               target="_blank" class="popup-button maps" style="padding: 6px 10px; font-size: 11px;">
+                                <i class="fab fa-google"></i> Google
+                            </a>
+                            <a href="https://yandex.com/maps/?rtext=~${lat},${lng}" 
+                               target="_blank" class="popup-button maps" style="padding: 6px 10px; font-size: 11px;">
+                                <i class="fas fa-map"></i> Yandex
+                            </a>
+                        </div>
+                    </div>
+                    
                     <div class="popup-buttons">
                         <button onclick="window.showListingDetails(${JSON.stringify(listing).replace(/'/g, "\\'")})" 
                                 class="popup-button details">
@@ -623,13 +693,13 @@
                 riseOnHover: true
             }).addTo(markers).bindPopup(popupContent);
 
-            marker.on('mouseover', function() {
-                this.openPopup();
-            });
-
-            // Marker bosilganda ham modal ochish
+            // Marker bosilganda modal ochish
             marker.on('click', function() {
                 showListingDetails(listing);
+            });
+
+            marker.on('mouseover', function() {
+                this.openPopup();
             });
 
             return marker;
@@ -752,6 +822,34 @@
             }
         }
 
+        // Qo'shimcha funksiyalar
+        function shareListing(listing) {
+            const shareText = `${listing.title} - ${listing.price}\n${listing.description}`;
+            const shareUrl = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: listing.title,
+                    text: shareText,
+                    url: shareUrl
+                });
+            } else {
+                navigator.clipboard.writeText(shareText + '\n' + shareUrl);
+                alert('E\'lon ma\'lumotlari buferga nusxalandi!');
+            }
+        }
+
+        function saveListing(listing) {
+            const savedListings = JSON.parse(localStorage.getItem('savedListings') || '[]');
+            if (!savedListings.find(item => item.id === listing.id)) {
+                savedListings.push(listing);
+                localStorage.setItem('savedListings', JSON.stringify(savedListings));
+                alert('E\'lon saqlandi!');
+            } else {
+                alert('E\'lon allaqachon saqlangan');
+            }
+        }
+
         // Dastlabki yuklash
         async function initializeMap() {
             allListings = await loadListingsFromBackend();
@@ -776,6 +874,8 @@
         window.refreshListings = refreshListings;
         window.clearFilters = clearFilters;
         window.filterListings = filterListings;
+        window.shareListing = shareListing;
+        window.saveListing = saveListing;
     </script>
 </body>
 </html>
